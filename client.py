@@ -7,23 +7,21 @@ import random
 from collections import Counter
 
 # --- GUI Constants ---
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 1600
+SCREEN_HEIGHT = 900
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
-RED = (200, 50, 50)
+RED = (180, 0, 0)
 GREEN = (50, 200, 50)
 BLUE = (50, 50, 200)
 YELLOW = (220, 220, 50)
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 
-
-CARD_WIDTH = 110
-CARD_HEIGHT = 165
+CARD_WIDTH = 180
+CARD_HEIGHT = 270
 CARD_MARGIN = 20
-
 PLAYER_AREA_WIDTH = 2 * (CARD_WIDTH + CARD_MARGIN) + 20
 PLAYER_AREA_HEIGHT = CARD_HEIGHT + 100
 
@@ -40,18 +38,25 @@ class PygameGUI:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        self.font = pygame.font.Font(None, 32)
-        self.big_font = pygame.font.Font(None, 48)
+        self.font = pygame.font.Font(None, 28)
+        self.big_font = pygame.font.Font(None, 42)
         self.title_font = pygame.font.Font(None, 96)
-        self.card_font = pygame.font.Font(None, 24)
+        self.card_font = pygame.font.Font(None, 22)
+        self.user_font = pygame.font.Font(None, 40)
         self.clock = pygame.time.Clock()
-        
-        self.FETCH_STATE_EVENT = pygame.USEREVENT + 1
 
-        # Initialize client state
+        self.card_images = {}
+        card_names = ["duke", "assassin", "captain", "ambassador", "contessa"]
+        for name in card_names:
+            img = pygame.image.load(f"assets/{name}.png")
+            self.card_images[name] = pygame.transform.scale(img, (CARD_WIDTH, CARD_HEIGHT))
+
+        self.card_back_img = pygame.image.load("assets/coup_back.png")
+        self.card_back_img = pygame.transform.scale(self.card_back_img, (CARD_WIDTH, CARD_HEIGHT))
+
+        self.FETCH_STATE_EVENT = pygame.USEREVENT + 1
         self.reset_to_menu()
-        
-        pygame.display.set_caption(f"Coup - Not Connected")
+        pygame.display.set_caption("Coup - Not Connected")
 
     def reset_to_menu(self):
         """Resets the client to the main menu state, clearing all game data."""
@@ -234,7 +239,7 @@ class PygameGUI:
                         return
 
     def draw(self):
-        self.screen.fill(WHITE)
+        self.screen.fill(RED)
         self.buttons.clear()
 
         if self.ui_state == 'MENU':
@@ -253,8 +258,8 @@ class PygameGUI:
                 msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
                 self.screen.blit(msg_surf, msg_rect)
             else:
-                self.draw_game_message()
                 self.draw_players()
+                self.draw_game_message()
                 self.draw_ui_elements()
         
         pygame.display.flip()
@@ -306,61 +311,106 @@ class PygameGUI:
         self.buttons[key] = rect
 
     def draw_players(self):
-        positions = [
-            (50, 50), (SCREEN_WIDTH - PLAYER_AREA_WIDTH - 50, 50),
-            (50, SCREEN_HEIGHT - PLAYER_AREA_HEIGHT - 50), (SCREEN_WIDTH - PLAYER_AREA_WIDTH - 50, SCREEN_HEIGHT - PLAYER_AREA_HEIGHT - 50)
-        ]
+        self.screen.fill(RED)
         self.player_areas.clear()
-        
-        for player_data in self.game_state.get('players', []):
-            i = player_data['id']
-            x, y = positions[i]
 
-            is_me = (i == self.player_id)
-            is_current = (i == self.game_state.get('current_player_idx'))
-            
-            if is_current and self.game_state.get('game_state') not in ['GAME_OVER', 'WAITING_FOR_PLAYERS']:
-                pygame.draw.rect(self.screen, YELLOW, (x-5, y-5, PLAYER_AREA_WIDTH+10, PLAYER_AREA_HEIGHT+10), border_radius=12)
+        player_list = self.game_state.get('players', [])
+        your_id = self.game_state.get('your_id', 0)
+
+        id_position_map = {}
+        others = [p['id'] for p in player_list if p['id'] != your_id]
+        for i, pid in enumerate(others):
+            id_position_map[pid] = i
+        id_position_map[your_id] = 3
+
+        for player_data in player_list:
+            pid = player_data['id']
+            index = id_position_map[pid]
+            is_me = (pid == your_id)
+
+            is_user = (index == 3)
+            font = self.user_font if is_user else self.font
+            card_scale = 1.0 if is_user else 0.85
+
+            card_w = int(CARD_WIDTH * card_scale)
+            card_h = int(CARD_HEIGHT * card_scale)
+            card_margin = int(CARD_MARGIN * card_scale)
+
+            if index == 0:
+                x = -int(card_h * 0.1)
+                y = SCREEN_HEIGHT // 2 - card_w // 2 - int(card_w * 0.4)
+            elif index == 1:
+                x = SCREEN_WIDTH // 2 - (card_w * 2 + card_margin) // 2
+                y = -int(card_h * 0.1)
+            elif index == 2:
+                x = SCREEN_WIDTH - card_h + int(card_h * 0.1)
+                y = SCREEN_HEIGHT // 2 - card_w // 2 - int(card_w * 0.4)
+            else:
+                x = SCREEN_WIDTH // 2 - (card_w * 2 + card_margin) // 2
+                y = SCREEN_HEIGHT - int(card_h * 0.9)
 
             area_rect = pygame.Rect(x, y, PLAYER_AREA_WIDTH, PLAYER_AREA_HEIGHT)
-            self.player_areas[i] = area_rect
-            
-            surface = pygame.Surface((PLAYER_AREA_WIDTH, PLAYER_AREA_HEIGHT), pygame.SRCALPHA)
-            surface.fill(PLAYER_COLORS[i])
-            self.screen.blit(surface, (x, y))
-            pygame.draw.rect(self.screen, BLACK, area_rect, 3, border_radius=8)
-            
-            name_text = self.big_font.render(player_data['name'], True, BLACK)
-            self.screen.blit(name_text, (x + 15, y + 10))
-            coins_text = self.font.render(f"Coins: {player_data['coins']}", True, BLACK)
-            self.screen.blit(coins_text, (x + 15, y + 55))
+            self.player_areas[pid] = area_rect
 
-            if player_data['is_out']:
-                out_text = self.big_font.render("ELIMINATED", True, RED)
-                out_rect = out_text.get_rect(center=area_rect.center)
-                self.screen.blit(out_text, out_rect)
-                continue
+            coins_text = font.render(f"COINS: {player_data['coins']}", True, WHITE)
+            player_name = player_data.get('name', f"PLAYER {index + 1}")
+            name_text = font.render(player_name, True, WHITE)
+
+            eliminated = player_data.get('influence_count', 0) == 0
+            eliminated_text = self.big_font.render("ELIMINATED", True, WHITE) if eliminated else None
 
             my_cards = self.game_state.get('your_cards', [])
             for j in range(player_data['influence_count']):
-                card_x = x + 15 + j * (CARD_WIDTH + CARD_MARGIN)
-                card_y = y + 95
-                card_rect = pygame.Rect(card_x, card_y, CARD_WIDTH, CARD_HEIGHT)
-                pygame.draw.rect(self.screen, BLUE, card_rect, border_radius=8)
-                
-                if is_me and j < len(my_cards):
-                    card_text = self.card_font.render(my_cards[j], True, WHITE)
-                    text_r = card_text.get_rect(center=card_rect.center)
-                    self.screen.blit(card_text, text_r)
+                if index == 0 or index == 2:
+                    card_rect = pygame.Rect(x, y + j * (card_w + card_margin), card_h, card_w)
                 else:
-                    q_mark = self.big_font.render("?", True, WHITE)
-                    q_r = q_mark.get_rect(center=card_rect.center)
-                    self.screen.blit(q_mark, q_r)
+                    card_rect = pygame.Rect(x + j * (card_w + card_margin), y, card_w, card_h)
 
+                if is_me and j < len(my_cards):
+                    card_name = my_cards[j].lower()
+                    if card_name in self.card_images:
+                        self.screen.blit(pygame.transform.scale(self.card_images[card_name], (card_w, card_h)), (card_rect.x, card_rect.y))
+                    else:
+                        pygame.draw.rect(self.screen, BLUE, card_rect, border_radius=8)
+                        card_text = self.card_font.render(my_cards[j], True, WHITE)
+                        text_r = card_text.get_rect(center=card_rect.center)
+                        self.screen.blit(card_text, text_r)
+                else:
+                    card_img = pygame.transform.scale(self.card_back_img, (card_w, card_h))
+                    if index == 0:
+                        card_img = pygame.transform.rotate(card_img, -90)
+                    elif index == 2:
+                        card_img = pygame.transform.rotate(card_img, 90)
+                    self.screen.blit(card_img, (card_rect.x, card_rect.y))
+
+            if index == 0:
+                self.screen.blit(name_text, (40, y - 30))
+                self.screen.blit(coins_text, (40, y + (card_w + card_margin) * 2))
+            elif index == 1:
+                self.screen.blit(name_text, (x - 100, y + card_h // 2 - 10))
+                self.screen.blit(coins_text, (x + card_w * 2 + 20, y + card_h // 2 - 10))
+            elif index == 2:
+                self.screen.blit(name_text, (SCREEN_WIDTH - name_text.get_width() - 40, y - 30))
+                self.screen.blit(coins_text, (SCREEN_WIDTH - coins_text.get_width() - 40, y + (card_w + card_margin) * 2))
+            elif index == 3:
+                self.screen.blit(name_text, (x, y - 35))
+                self.screen.blit(coins_text, (x + (card_w + card_margin) * 2 + 10, y + card_h // 2))
+
+            if eliminated_text:
+                if index == 0:
+                    eliminated_text = pygame.transform.rotate(eliminated_text, -90)
+                    self.screen.blit(eliminated_text, (20, y + card_w // 2))
+                elif index == 2:
+                    eliminated_text = pygame.transform.rotate(eliminated_text, 90)
+                    self.screen.blit(eliminated_text, (SCREEN_WIDTH - eliminated_text.get_width() - 20, y + card_w // 2))
+                else:
+                    eliminated_rect = eliminated_text.get_rect(center=(x + card_w, y + card_h // 2))
+                    self.screen.blit(eliminated_text, eliminated_rect)
+                
     def draw_game_message(self):
         msg = self.game_state.get('message', 'Loading...')
-        msg_surf = self.big_font.render(msg, True, BLACK)
-        msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH/2, 40))
+        msg_surf = self.big_font.render(msg, True, WHITE)
+        msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH / 2, 250))
         self.screen.blit(msg_surf, msg_rect)
 
     def draw_ui_elements(self):
@@ -374,7 +424,7 @@ class PygameGUI:
             if gs.get('game_state') == 'MUST_COUP': actions = ['Coup']
             
             for i, name in enumerate(actions):
-                rect = pygame.Rect(SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 - 150 + i * 45, 300, 40)
+                rect = pygame.Rect(SCREEN_WIDTH/2 - 120, SCREEN_HEIGHT/2 - 130 + i * 35, 240, 30)
                 self.draw_button(name, rect, ('action', name), GREEN)
 
         # --- Response Buttons (FIXED) ---
@@ -416,7 +466,7 @@ class PygameGUI:
             total_width = len(cards) * 150 - 10
             start_x = SCREEN_WIDTH/2 - total_width/2
             for i, card in enumerate(cards):
-                rect = pygame.Rect(start_x + i * 150, SCREEN_HEIGHT/2 - 50, 140, 50)
+                rect = pygame.Rect(SCREEN_WIDTH/2 - 140, SCREEN_HEIGHT/2 - 140 + i * 35, 280, 30)
                 is_selected = any(item[1] == i for item in self.exchange_selection)
                 border_color = GREEN if is_selected else BLACK
                 key = ('select_exchange', (card, i))
