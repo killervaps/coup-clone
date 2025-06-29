@@ -305,7 +305,7 @@ class PygameGUI:
         self.screen.blit(msg_surf, msg_rect)
 
         button_rect = pygame.Rect(SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 + 50, 300, 80)
-        self.draw_button("Back to Menu", button_rect, ('action', 'BackToMenu'), BLUE)
+        self.draw_button("Back to Menu", button_rect, ('action', 'BackToMenu'), GREEN)
 
     def draw_button(self, text, rect, key, color, border_color=BLACK):
         pygame.draw.rect(self.screen, color, rect, border_radius=8)
