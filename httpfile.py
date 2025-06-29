@@ -152,7 +152,7 @@ class GameController:
             player = self.players[player_id]
             if not player.is_out:
                 player.is_out = True
-                player.coins = 0 # Set coins to zero
+                player.coins = 0
                 for card in player.influence:
                     self.deck.append(card)
                 random.shuffle(self.deck)
@@ -204,11 +204,10 @@ class GameController:
             if player_id != self.action_player.id: return
             target_id = data.get('target_id')
             if target_id is not None:
-                # --- FIX: Check if target is already eliminated ---
                 target_player = self.players[target_id]
                 if target_player.is_out:
                     self.message = f"{target_player.name} is already eliminated. Choose another target."
-                    return # Stay in SELECTING_TARGET state with the new message
+                    return
                 
                 self.target_player = target_player
                 self.begin_response_phase()
@@ -309,6 +308,12 @@ class GameController:
             self.post_influence_loss_state = 'NEXT_TURN'
             self.message = f"{self.target_player.name} must lose an influence."
         elif self.action.name == 'Exchange':
+            alive = [p for p in self.players if not p.is_out]
+            if len(alive) <= 1:
+                self.state = 'GAME_OVER'
+                self.message = f"Winner: {alive[0].name if alive else 'None'}"
+                return
+            
             self.state = 'AMBASSADOR_EXCHANGE'
             self.pre_exchange_influence_count = len(self.action_player.influence)
             self.ambassador_cards = self.action_player.influence[:] + [self.deck.pop() for _ in range(2) if self.deck]
