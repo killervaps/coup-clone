@@ -14,7 +14,7 @@ SCREEN_HEIGHT = 900
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
-RED = (180, 0, 0)
+RED = (180, 50, 50)
 GREEN = (50, 200, 50)
 BLUE = (50, 50, 200)
 YELLOW = (220, 220, 50)
@@ -256,7 +256,7 @@ class PygameGUI:
             self.draw_game_over_screen()
         elif self.ui_state == 'PLAYING':
             if not self.game_state:
-                msg_surf = self.big_font.render("Connecting to server...", True, BLACK)
+                msg_surf = self.big_font.render("Connecting to server...", True, WHITE)
                 msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
                 self.screen.blit(msg_surf, msg_rect)
             else:
@@ -268,18 +268,18 @@ class PygameGUI:
         
     def draw_menu_screen(self):
         # Draw Title
-        title_surf = self.title_font.render("COUP", True, BLACK)
+        title_surf = self.title_font.render("COUP", True, WHITE)
         title_rect = title_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 150))
         self.screen.blit(title_surf, title_rect)
 
         # Draw Name Input Box
-        label_surf = self.big_font.render("Enter Your Name:", True, BLACK)
+        label_surf = self.big_font.render("Enter Your Name:", True, WHITE)
         label_rect = label_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 70))
         self.screen.blit(label_surf, label_rect)
 
         color = COLOR_ACTIVE if self.input_active else COLOR_INACTIVE
         pygame.draw.rect(self.screen, color, self.input_box, 2, border_radius=5)
-        txt_surface = self.big_font.render(self.player_name, True, BLACK)
+        txt_surface = self.big_font.render(self.player_name, True, WHITE)
         self.screen.blit(txt_surface, (self.input_box.x+10, self.input_box.y+5))
         self.input_box.w = max(300, txt_surface.get_width()+20) # Resize box dynamically
 
@@ -292,7 +292,7 @@ class PygameGUI:
         player_list = self.game_state.get('players', [])
         if len(player_list) < 4:
             msg = self.game_state.get('message', "Waiting for players...")
-            msg_surf = self.title_font.render(msg, True, BLACK)  # Gunakan font besar
+            msg_surf = self.title_font.render(msg, True, WHITE)  # Gunakan font besar
             msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
             self.screen.blit(msg_surf, msg_rect)
         else:
@@ -300,7 +300,7 @@ class PygameGUI:
 
     def draw_game_over_screen(self):
         msg = self.game_state.get('message', "Game Over!")
-        msg_surf = self.title_font.render(msg, True, BLACK)
+        msg_surf = self.title_font.render(msg, True, WHITE)
         msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 100))
         self.screen.blit(msg_surf, msg_rect)
 
@@ -419,7 +419,6 @@ class PygameGUI:
                 else:
                     bg_rect = bg_surf.get_rect(center=(x + card_w, y + card_h // 2))
                     self.screen.blit(bg_surf, bg_rect)
-
                 
     def draw_game_message(self):
         msg = self.game_state.get('message', 'Loading...')
@@ -447,9 +446,9 @@ class PygameGUI:
             can_challenge = ui_context.get('can_challenge', False)
             can_block = ui_context.get('can_block', False)
             
-            buttons_to_draw = [{'text': 'Pass', 'key': ('response', 'Pass'), 'color': GRAY}]
+            buttons_to_draw = [{'text': 'Pass', 'key': ('response', 'Pass'), 'color': GREEN}]
             if can_challenge: buttons_to_draw.append({'text': 'Challenge', 'key': ('response', 'Challenge'), 'color': YELLOW})
-            if can_block: buttons_to_draw.append({'text': 'Block', 'key': ('response', 'Block'), 'color': RED})
+            if can_block: buttons_to_draw.append({'text': 'Block', 'key': ('response', 'Block'), 'color': GRAY})
             
             total_width = len(buttons_to_draw) * 210 - 10
             start_x = SCREEN_WIDTH/2 - total_width/2
@@ -470,7 +469,7 @@ class PygameGUI:
             num_cards = len(cards)
             for i, card in enumerate(cards):
                 rect = pygame.Rect(SCREEN_WIDTH/2 - (num_cards * 220)/2 + 10 + i * 220, SCREEN_HEIGHT/2, 200, 60)
-                self.draw_button(f"Lose {card}", rect, ('card', card), RED)
+                self.draw_button(f"Lose {card}", rect, ('card', card), YELLOW)
         
         # --- Ambassador Exchange Buttons ---
         if ui_context.get('type') == 'ambassador_exchange' and is_my_turn:
