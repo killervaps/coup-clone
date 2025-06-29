@@ -10,7 +10,7 @@ import random
 import threading
 
 # =================================================================================
-# Core Game Logic
+# Game Logic
 # =================================================================================
 
 class Action:
@@ -20,29 +20,37 @@ class Action:
     coins_needed = 0
     character = None
     can_be_bluffed = False
-    def play(self, player, target=None): return True, "Success"
+    def play(self, player, target=None):
+        return True, "Success"
 
 class Income(Action):
     name = "Income"
-    def play(self, player, target=None): player.coins += 1; return True, "Success"
+    def play(self, player, target=None):
+        player.coins += 1
+        return True, "Success"
 
 class ForeignAid(Action):
     name = "ForeignAid"
     blockable_by = ['Duke']
     can_be_bluffed = False
-    def play(self, player, target=None): player.coins += 2; return True, "Success"
+    def play(self, player, target=None):
+        player.coins += 2
+        return True, "Success"
 
 class Coup(Action):
     name = "Coup"
     has_target = True
     coins_needed = 7
-    def play(self, player, target=None): return True, "Success"
+    def play(self, player, target=None):
+        return True, "Success"
 
 class Tax(Action):
     name = "Tax"
     character = 'Duke'
     can_be_bluffed = True
-    def play(self, player, target=None): player.coins += 3; return True, "Success"
+    def play(self, player, target=None):
+        player.coins += 3
+        return True, "Success"
 
 class Steal(Action):
     name = "Steal"
@@ -63,18 +71,21 @@ class Assassinate(Action):
     has_target = True
     coins_needed = 3
     can_be_bluffed = True
-    def play(self, player, target=None): return True, "Success"
+    def play(self, player, target=None):
+        return True, "Success"
 
 class Exchange(Action):
     name = "Exchange"
     character = 'Ambassador'
     can_be_bluffed = True
-    def play(self, player, target=None): return True, "Success"
+    def play(self, player, target=None):
+        return True, "Success"
 
 class GameState:
     _instance = None
     def __new__(cls):
-        if not cls._instance: cls._instance = super(GameState, cls).__new__(cls)
+        if not cls._instance:
+            cls._instance = super(GameState, cls).__new__(cls)
         return cls._instance
     
     def initialize(self):
@@ -94,10 +105,14 @@ class Player:
         self.influence = [deck.pop(), deck.pop()]
         self.is_out = False
     def lose_influence(self, card_name):
-        if card_name in self.influence: self.influence.remove(card_name)
-        if not self.influence: self.is_out = True
-    def has_card(self, card_name): return card_name in self.influence
-    def to_dict_for_others(self): return {'id': self.id, 'name': self.name, 'coins': self.coins, 'influence_count': len(self.influence), 'is_out': self.is_out}
+        if card_name in self.influence:
+            self.influence.remove(card_name)
+        if not self.influence:
+            self.is_out = True
+    def has_card(self, card_name):
+        return card_name in self.influence
+    def to_dict_for_others(self):
+        return {'id': self.id, 'name': self.name, 'coins': self.coins, 'influence_count': len(self.influence), 'is_out': self.is_out}
 
 class GameController:
     """Manages ONE game instance/room."""
@@ -108,7 +123,16 @@ class GameController:
         self.state = 'WAITING_FOR_PLAYERS'
         self.current_player_idx = 0
         self.message = f"Waiting for players..."
-        self.action = None; self.action_player = None; self.target_player = None; self.potential_responders = []; self.blocker = None; self.challenger = None; self.player_losing_influence = None; self.post_influence_loss_state = None; self.ambassador_cards = []; self.pre_exchange_influence_count = 0
+        self.action = None
+        self.action_player = None
+        self.target_player = None
+        self.potential_responders = []
+        self.blocker = None
+        self.challenger = None
+        self.player_losing_influence = None
+        self.post_influence_loss_state = None
+        self.ambassador_cards = []
+        self.pre_exchange_influence_count = 0
         self.players_who_passed = set()
 
     def add_player(self, name):
@@ -143,7 +167,8 @@ class GameController:
                     self.next_turn()
 
     def get_state_for_player(self, player_id):
-        if player_id >= len(self.players): return {'error': 'Player not joined yet'}
+        if player_id >= len(self.players):
+            return {'error': 'Player not joined yet'}
         player = self.players[player_id]
         state = {'game_state': self.state, 'message': self.message, 'your_id': player.id, 'your_cards': player.influence, 'players': [p.to_dict_for_others() for p in self.players], 'current_player_idx': self.current_player_idx, 'ui_context': {}}
         
@@ -174,6 +199,7 @@ class GameController:
         if self.state in ['AWAITING_ACTION', 'MUST_COUP']:
             if player_id != self.current_player_idx: return
             self.start_action(data.get('action'))
+        
         elif self.state == 'SELECTING_TARGET':
             if player_id != self.action_player.id: return
             target_id = data.get('target_id')
@@ -186,6 +212,7 @@ class GameController:
                 
                 self.target_player = target_player
                 self.begin_response_phase()
+        
         elif self.state == 'AWAITING_BROADCAST_RESPONSE':
             if not any(p.id == player_id for p in self.potential_responders): return
             response = data.get('response')
@@ -272,6 +299,12 @@ class GameController:
         self.action.play(self.action_player, self.target_player)
         if self.action.name in ['Coup', 'Assassinate']:
             self.player_losing_influence = self.target_player
+            
+            if self.target_player.is_out:
+                self.message = f"{self.target_player.name} has been eliminated."
+                self.next_turn()
+                return
+
             self.state = 'CHOOSING_INFLUENCE_TO_LOSE'
             self.post_influence_loss_state = 'NEXT_TURN'
             self.message = f"{self.target_player.name} must lose an influence."
@@ -387,24 +420,32 @@ class HttpServer:
         self.types['.html']='text/html'
         self.types['.json']='application/json' # Added for API responses
 
-    def response(self, kode=404, message='Not Found', messagebody=bytes(), headers={}):
+    def response(self,kode=404,message='Not Found',messagebody=bytes(),headers={}):
         tanggal = datetime.now().strftime('%c')
         resp=[]
-        resp.append(f"HTTP/1.0 {kode} {message}\r\n")
-        resp.append(f"Date: {tanggal}\r\n")
+        resp.append("HTTP/1.0 {} {}\r\n" . format(kode,message))
+        resp.append("Date: {}\r\n" . format(tanggal))
         resp.append("Connection: close\r\n")
-        resp.append("Server: CoupServer/1.0\r\n")
-        resp.append(f"Content-Length: {len(messagebody)}\r\n")
+        resp.append("Server: myserver/1.0\r\n")
+        resp.append("Content-Length: {}\r\n" . format(len(messagebody)))
         resp.append("Access-Control-Allow-Origin: *\r\n") # Added for CORS
         for kk in headers:
-            resp.append(f"{kk}:{headers[kk]}\r\n")
+            resp.append("{}:{}\r\n" . format(kk,headers[kk]))
         resp.append("\r\n")
-
-        response_headers = "".join(resp)
-        if not isinstance(messagebody, bytes):
+        
+        response_headers=''
+        for i in resp:
+            response_headers="{}{}" . format(response_headers,i)
+        #menggabungkan resp menjadi satu string dan menggabungkan dengan messagebody yang berupa bytes
+        #response harus berupa bytes
+        #message body harus diubah dulu menjadi bytes
+        if (type(messagebody) is not bytes):
             messagebody = messagebody.encode()
 
-        return response_headers.encode() + messagebody
+        response = response_headers.encode() + messagebody
+        #response adalah bytes
+        return response
+
 
     def proses(self, data):
         requests = data.split("\r\n")
@@ -418,11 +459,12 @@ class HttpServer:
         j = baris.split(" ")
         try:
             method = j[0].upper().strip()
-            object_address = j[1].strip()
 
             if (method=='GET'):
+                object_address = j[1].strip()
                 return self.http_get(object_address)
             if (method=='POST'):
+                object_address = j[1].strip()
                 return self.http_post(object_address, body)
             if (method=='OPTIONS'):
                 return self.response(200, 'OK', '', {'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type'})

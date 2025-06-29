@@ -1,7 +1,10 @@
+from socket import *
 import socket
 import threading
+import time
+import sys
 import logging
-from httpfile import HttpServer # Import the new http.py
+from httpfile import HttpServer
 
 # Global instance of the HTTP server logic
 httpserver = HttpServer()
@@ -83,7 +86,9 @@ class Server(threading.Thread):
     def run(self):
         self.my_socket.bind(('0.0.0.0', self.port))
         self.my_socket.listen(1)
+        
         logging.warning(f"Coup server started on port {self.port}")
+        
         while True:
             try:
                 self.connection, self.client_address = self.my_socket.accept()
@@ -96,10 +101,8 @@ class Server(threading.Thread):
                 logging.error(f"Error accepting connection: {e}")
 
 def main():
-    # Setup basic logging
     logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
     
-    # Use port 8000 to match the client
     svr = Server(port=8000)
     svr.start()
 
