@@ -322,11 +322,11 @@ class PygameGUI:
         player_list = self.game_state.get('players', [])
         your_id = self.game_state.get('your_id', 0)
 
-        id_position_map = {}
-        others = [p['id'] for p in player_list if p['id'] != your_id]
-        for i, pid in enumerate(others):
-            id_position_map[pid] = i
-        id_position_map[your_id] = 3
+        your_index = next((i for i, p in enumerate(player_list) if p['id'] == your_id), 0)
+        sorted_players = player_list[your_index:] + player_list[:your_index]
+
+        position_map = {0: 3, 1: 0, 2: 1, 3: 2}
+        id_position_map = {player['id']: position_map[i] for i, player in enumerate(sorted_players)}
 
         for player_data in player_list:
             pid = player_data['id']
@@ -362,7 +362,6 @@ class PygameGUI:
             name_text = font.render(player_name, True, WHITE)
 
             eliminated = player_data.get('influence_count', 0) == 0
-            eliminated_text = self.big_font.render("ELIMINATED", True, WHITE) if eliminated else None
 
             my_cards = self.game_state.get('your_cards', [])
             for j in range(player_data['influence_count']):
@@ -420,6 +419,7 @@ class PygameGUI:
                 else:
                     bg_rect = bg_surf.get_rect(center=(x + card_w, y + card_h // 2))
                     self.screen.blit(bg_surf, bg_rect)
+
                 
     def draw_game_message(self):
         msg = self.game_state.get('message', 'Loading...')
