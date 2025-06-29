@@ -305,7 +305,7 @@ class PygameGUI:
         self.screen.blit(msg_surf, msg_rect)
 
         button_rect = pygame.Rect(SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 + 50, 300, 80)
-        self.draw_button("Back to Menu", button_rect, ('action', 'BackToMenu'), BLUE)
+        self.draw_button("Back to Menu", button_rect, ('action', 'BackToMenu'), GREEN)
 
     def draw_button(self, text, rect, key, color, border_color=BLACK):
         pygame.draw.rect(self.screen, color, rect, border_radius=8)
@@ -404,6 +404,9 @@ class PygameGUI:
                 elim_font = self.big_font
                 elim_text = elim_font.render("ELIMINATED", True, (255, 0, 0))
 
+                if self.game_state.get('game_state') == 'AMBASSADOR_EXCHANGE' and self.game_state.get('current_player_idx') == pid:
+                    elim_text = elim_font.render("EXCHANGING", True, (255, 255, 255))
+
                 padding = 10
                 bg_rect = pygame.Rect(0, 0, elim_text.get_width() + padding, elim_text.get_height() + padding)
                 bg_surf = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
@@ -491,7 +494,6 @@ class PygameGUI:
             if len(self.exchange_selection) == num_to_keep:
                 confirm_rect = pygame.Rect(SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 + 50, 300, 50)
                 self.draw_button(f"Confirm Exchange", confirm_rect, ('action', 'ConfirmExchange'), GREEN)
-
 
 if __name__ == '__main__':
     gui = PygameGUI()
