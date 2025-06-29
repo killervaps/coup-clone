@@ -4,6 +4,8 @@ import requests
 import json
 import time
 import random
+import ctypes
+ctypes.windll.user32.SetProcessDPIAware()
 from collections import Counter
 
 # --- GUI Constants ---
