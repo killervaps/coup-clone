@@ -396,16 +396,25 @@ class PygameGUI:
                 self.screen.blit(name_text, (x, y - 35))
                 self.screen.blit(coins_text, (x + (card_w + card_margin) * 2 + 10, y + card_h // 2))
 
-            if eliminated_text:
+            if eliminated:
+                elim_font = self.big_font
+                elim_text = elim_font.render("ELIMINATED", True, (255, 0, 0))
+
+                padding = 10
+                bg_rect = pygame.Rect(0, 0, elim_text.get_width() + padding, elim_text.get_height() + padding)
+                bg_surf = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+                pygame.draw.rect(bg_surf, BLACK, bg_surf.get_rect(), border_radius=8)
+                bg_surf.blit(elim_text, (padding // 2, padding // 2))
+
                 if index == 0:
-                    eliminated_text = pygame.transform.rotate(eliminated_text, -90)
-                    self.screen.blit(eliminated_text, (20, y + card_w // 2))
+                    bg_surf = pygame.transform.rotate(bg_surf, -90)
+                    self.screen.blit(bg_surf, (40, y + card_w // 2))
                 elif index == 2:
-                    eliminated_text = pygame.transform.rotate(eliminated_text, 90)
-                    self.screen.blit(eliminated_text, (SCREEN_WIDTH - eliminated_text.get_width() - 20, y + card_w // 2))
+                    bg_surf = pygame.transform.rotate(bg_surf, 90)
+                    self.screen.blit(bg_surf, (SCREEN_WIDTH - bg_surf.get_width() - 40, y + card_w // 2))
                 else:
-                    eliminated_rect = eliminated_text.get_rect(center=(x + card_w, y + card_h // 2))
-                    self.screen.blit(eliminated_text, eliminated_rect)
+                    bg_rect = bg_surf.get_rect(center=(x + card_w, y + card_h // 2))
+                    self.screen.blit(bg_surf, bg_rect)
                 
     def draw_game_message(self):
         msg = self.game_state.get('message', 'Loading...')
