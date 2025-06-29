@@ -289,11 +289,14 @@ class PygameGUI:
         self.draw_button("Find Match", button_rect, ('action', 'Match'), button_color)
 
     def draw_lobby_screen(self):
-        msg = self.game_state.get('message', "Waiting for players...")
-        msg_surf = self.big_font.render(msg, True, BLACK)
-        msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
-        self.screen.blit(msg_surf, msg_rect)
-        self.draw_players()
+        player_list = self.game_state.get('players', [])
+        if len(player_list) < 4:
+            msg = self.game_state.get('message', "Waiting for players...")
+            msg_surf = self.title_font.render(msg, True, BLACK)  # Gunakan font besar
+            msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
+            self.screen.blit(msg_surf, msg_rect)
+        else:
+            self.draw_players()
 
     def draw_game_over_screen(self):
         msg = self.game_state.get('message', "Game Over!")
