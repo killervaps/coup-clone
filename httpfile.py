@@ -165,6 +165,12 @@ class GameController:
                 # If the current player is eliminated, advance the turn
                 elif self.current_player_idx == player_id:
                     self.next_turn()
+            
+            alive = [p for p in self.players if not p.is_out]
+            if len(alive) <= 1:
+                self.state = 'GAME_OVER'
+                self.message = f"Winner: {alive[0].name if alive else 'None'}"
+                return
 
     def get_state_for_player(self, player_id):
         if player_id >= len(self.players):
@@ -180,11 +186,15 @@ class GameController:
                 can_challenge = self.action.can_be_bluffed
                 can_block = (action_name == 'ForeignAid')
                 if action_name in ['Steal', 'Assassinate']:
-                    can_block = True 
+                    can_block = True
+                if player_id in self.players_who_passed:
+                    can_block = False
+                    can_challenge = False
                 state['ui_context'] = {
                     'type': 'broadcast_response', 'action': action_name,
                     'can_challenge': can_challenge, 'can_block': can_block
                 }
+
         elif self.state == 'AWAITING_BLOCK_CHALLENGE' and self.action_player.id == player_id:
             state['ui_context'] = {'type': 'challenge_block'}
         elif self.state == 'CHOOSING_INFLUENCE_TO_LOSE' and self.player_losing_influence and self.player_losing_influence.id == player_id:
@@ -280,9 +290,12 @@ class GameController:
         if action_name == 'Income':
             self.execute_action()
             return
-        if action_name in ['Steal', 'Assassinate', 'Coup']:
+        if action_name in ['Steal', 'Assassinate']:
             if self.target_player and not self.target_player.is_out: self.potential_responders = [self.target_player]
             else: self.potential_responders = []
+        elif action_name == 'Coup':
+            self.execute_action()
+            return
         else:
             self.potential_responders = [p for p in self.players if p.id != self.action_player.id and not p.is_out]
         if self.potential_responders: self.state = 'AWAITING_BROADCAST_RESPONSE'
@@ -297,13 +310,12 @@ class GameController:
         self.message = f"{self.action_player.name}'s {self.action.name} succeeds."
         self.action.play(self.action_player, self.target_player)
         if self.action.name in ['Coup', 'Assassinate']:
-            self.player_losing_influence = self.target_player
-            
             if self.target_player.is_out:
                 self.message = f"{self.target_player.name} has been eliminated."
                 self.next_turn()
                 return
-
+            
+            self.player_losing_influence = self.target_player
             self.state = 'CHOOSING_INFLUENCE_TO_LOSE'
             self.post_influence_loss_state = 'NEXT_TURN'
             self.message = f"{self.target_player.name} must lose an influence."

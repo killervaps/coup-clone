@@ -450,6 +450,9 @@ class PygameGUI:
             if can_challenge: buttons_to_draw.append({'text': 'Challenge', 'key': ('response', 'Challenge'), 'color': YELLOW})
             if can_block: buttons_to_draw.append({'text': 'Block', 'key': ('response', 'Block'), 'color': GRAY})
             
+            if not can_challenge and not can_block:
+                buttons_to_draw = []
+
             total_width = len(buttons_to_draw) * 210 - 10
             start_x = SCREEN_WIDTH/2 - total_width/2
             
