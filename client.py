@@ -315,6 +315,18 @@ class PygameGUI:
         self.screen.blit(text_surf, text_rect)
         self.buttons[key] = rect
 
+    # <<< NEW HELPER FUNCTION ADDED HERE >>>
+    def draw_rounded_card(self, surface, image, rect, radius):
+        """
+        Draws an image with rounded corners onto a surface.
+        """
+        image_rect = image.get_rect()
+        clip_surface = pygame.Surface(image_rect.size, pygame.SRCALPHA)
+        pygame.draw.rect(clip_surface, WHITE, image_rect, border_radius=radius)
+        image_copy = image.copy()
+        image_copy.blit(clip_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+        surface.blit(image_copy, rect)
+
     def draw_players(self):
         self.screen.fill(RED)
         self.player_areas.clear()
@@ -373,7 +385,9 @@ class PygameGUI:
                 if is_me and j < len(my_cards):
                     card_name = my_cards[j].lower()
                     if card_name in self.card_images:
-                        self.screen.blit(pygame.transform.scale(self.card_images[card_name], (card_w, card_h)), (card_rect.x, card_rect.y))
+                        # <<< CHANGED LINE >>>
+                        card_img_scaled = pygame.transform.scale(self.card_images[card_name], (card_w, card_h))
+                        self.draw_rounded_card(self.screen, card_img_scaled, card_rect, 15)
                     else:
                         pygame.draw.rect(self.screen, BLUE, card_rect, border_radius=8)
                         card_text = self.card_font.render(my_cards[j], True, WHITE)
@@ -385,7 +399,8 @@ class PygameGUI:
                         card_img = pygame.transform.rotate(card_img, -90)
                     elif index == 2:
                         card_img = pygame.transform.rotate(card_img, 90)
-                    self.screen.blit(card_img, (card_rect.x, card_rect.y))
+                    # <<< CHANGED LINE >>>
+                    self.draw_rounded_card(self.screen, card_img, card_rect, 15)
 
             if index == 0:
                 self.screen.blit(name_text, (40, y - 30))
@@ -422,7 +437,7 @@ class PygameGUI:
                 else:
                     bg_rect = bg_surf.get_rect(center=(x + card_w, y + card_h // 2))
                     self.screen.blit(bg_surf, bg_rect)
-                
+            
     def draw_game_message(self):
         msg = self.game_state.get('message', 'Loading...')
         msg_surf = self.big_font.render(msg, True, WHITE)
