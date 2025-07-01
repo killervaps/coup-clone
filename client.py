@@ -33,7 +33,7 @@ PLAYER_COLORS = [
     (255, 255, 100, 150)
 ]
 
-SERVER_URL = "http://127.0.0.1:8000" 
+SERVER_URL = "http://127.0.0.1:8003" 
 
 class PygameGUI:
     def __init__(self):

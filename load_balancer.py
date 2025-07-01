@@ -5,7 +5,6 @@ import sys
 import logging
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
-import hashlib
 
 class BackendList:
 	def __init__(self):
@@ -83,9 +82,9 @@ def Server():
 			try:
 				backend_sock.connect(backend_address)
 
-				toupstream = executor.submit(ProcessTheClient, connection, client_address,backend_sock,'toupstream')
+				executor.submit(ProcessTheClient, connection, client_address,backend_sock,'toupstream')
 				
-				toclient = executor.submit(ProcessTheClient, connection, client_address,backend_sock,'toclient')
+				executor.submit(ProcessTheClient, connection, client_address,backend_sock,'toclient')
 				
 			except Exception as err:
 				logging.error(err)
