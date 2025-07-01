@@ -16,8 +16,7 @@ class ProcessTheClient(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        
-        raw_request = bytearray()
+        raw_request = bytearray() # Bagus untuk data yang akumulatif seperti dibawah +=
         
         while True:
             try:
@@ -39,7 +38,7 @@ class ProcessTheClient(threading.Thread):
         # Proses full request dengan httpserver instance
         full_request_string = raw_request.decode('utf-8', errors='ignore')
         try:
-            logging.warning(f"data dari client: {self.address} -> {full_request_string.splitlines()[0]}")
+            logging.warning(f"data dari client: {self.address} -> {full_request_string.splitlines()[0]}") # Memotong \r\n
         except IndexError:
             logging.warning(f"data dari client: {self.address} -> (empty request)")
 
