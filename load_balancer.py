@@ -87,8 +87,6 @@ def Server():
 				
 				toclient = executor.submit(ProcessTheClient, connection, client_address,backend_sock,'toclient')
 				
-				jumlah = ['x' for i in the_clients if i.running() == True]
-				
 			except Exception as err:
 				logging.error(err)
 				pass
