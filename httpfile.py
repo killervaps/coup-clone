@@ -9,10 +9,6 @@ from collections import Counter
 import random
 import threading
 
-# =================================================================================
-# Game Logic
-# =================================================================================
-
 class Action:
     name = ""
     blockable_by = []
@@ -115,7 +111,6 @@ class Player:
         return {'id': self.id, 'name': self.name, 'coins': self.coins, 'influence_count': len(self.influence), 'is_out': self.is_out}
 
 class GameController:
-    """Manages ONE game instance/room."""
     def __init__(self, num_players=4):
         self.num_players_required = num_players
         self.deck = GameState().get_new_deck()
@@ -159,10 +154,8 @@ class GameController:
                 player.influence = []
                 self.message = f"{player.name} has been eliminated."
                 
-                # Check if the eliminated player was the last one needed to respond
                 if self.state in ['AWAITING_BROADCAST_RESPONSE']:
                     self.check_all_passed()
-                # If the current player is eliminated, advance the turn
                 elif self.current_player_idx == player_id:
                     self.next_turn()
             
@@ -249,7 +242,7 @@ class GameController:
         elif self.state == 'CHOOSING_INFLUENCE_TO_LOSE':
             if not self.player_losing_influence or player_id != self.player_losing_influence.id: return
             card_to_lose = data.get('card')
-            # Ensure the player actually loses an influence, even if card name is wrong
+            
             if card_to_lose not in self.player_losing_influence.influence and self.player_losing_influence.influence:
                 card_to_lose = self.player_losing_influence.influence[0]
             
@@ -396,9 +389,7 @@ class GameController:
         else:
             self.message = f"{self.players[self.current_player_idx].name}'s turn."
 
-
 class ServerManager:
-    """Manages all game instances."""
     def __init__(self):
         self.game_instances = {}
         self.next_game_id = 0
@@ -420,13 +411,8 @@ class ServerManager:
     def get_game(self, game_id):
         return self.game_instances.get(game_id)
 
-
-# =================================================================================
-# HTTP Server Foundation (from http.py)
-# =================================================================================
 class HttpServer:
     def __init__(self):
-        # Global instances for the server are now tied to the HttpServer instance
         GameState().initialize()
         self.server_manager = ServerManager()
         self.sessions={}
@@ -435,7 +421,7 @@ class HttpServer:
         self.types['.jpg']='image/jpeg'
         self.types['.txt']='text/plain'
         self.types['.html']='text/html'
-        self.types['.json']='application/json' # Added for API responses
+        self.types['.json']='application/json' 
 
     def response(self,kode=404,message='Not Found',messagebody=bytes(),headers={}):
         tanggal = datetime.now().strftime('%c')
@@ -445,7 +431,7 @@ class HttpServer:
         resp.append("Connection: close\r\n")
         resp.append("Server: myserver/1.0\r\n")
         resp.append("Content-Length: {}\r\n" . format(len(messagebody)))
-        resp.append("Access-Control-Allow-Origin: *\r\n") # Added for CORS
+        resp.append("Access-Control-Allow-Origin: *\r\n") 
         for kk in headers:
             resp.append("{}:{}\r\n" . format(kk,headers[kk]))
         resp.append("\r\n")
@@ -453,16 +439,13 @@ class HttpServer:
         response_headers=''
         for i in resp:
             response_headers="{}{}" . format(response_headers,i)
-        #menggabungkan resp menjadi satu string dan menggabungkan dengan messagebody yang berupa bytes
-        #response harus berupa bytes
-        #message body harus diubah dulu menjadi bytes
+        
         if (type(messagebody) is not bytes):
             messagebody = messagebody.encode()
 
         response = response_headers.encode() + messagebody
-        #response adalah bytes
+        
         return response
-
 
     def proses(self, data):
         requests = data.split("\r\n")

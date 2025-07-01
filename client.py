@@ -8,7 +8,6 @@ import ctypes
 ctypes.windll.user32.SetProcessDPIAware()
 from collections import Counter
 
-# --- GUI Constants ---
 SCREEN_WIDTH = 1600
 SCREEN_HEIGHT = 900
 WHITE = (255, 255, 255)
@@ -34,7 +33,7 @@ PLAYER_COLORS = [
     (255, 255, 100, 150)
 ]
 
-SERVER_URL = "http://127.0.0.1:8000" # Use 127.0.0.1 for local testing
+SERVER_URL = "http://127.0.0.1:8000" 
 
 class PygameGUI:
     def __init__(self):
@@ -61,25 +60,22 @@ class PygameGUI:
         pygame.display.set_caption("Coup - Not Connected")
 
     def reset_to_menu(self):
-        """Resets the client to the main menu state, clearing all game data."""
         self.player_id = None
         self.game_id = None
-        self.player_name = "" # Start with an empty name
-        self.ui_state = 'MENU' # MENU, WAITING_IN_LOBBY, PLAYING, GAME_OVER, FAILED
+        self.player_name = "" 
+        self.ui_state = 'MENU' 
         self.game_state = {} 
         self.buttons = {}
         self.player_areas = {}
         self.exchange_selection = []
         
-        # Add input box for player name
+        
         self.input_box = pygame.Rect(SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 - 20, 300, 50)
         self.input_active = True
 
-        pygame.time.set_timer(self.FETCH_STATE_EVENT, 0) # Stop polling
+        pygame.time.set_timer(self.FETCH_STATE_EVENT, 0) 
 
     def matchmake(self):
-        """Attempts to join a game lobby via the server's matchmaking."""
-        # Use the entered player name, or a default if empty (though UI prevents this)
         player_name_to_send = self.player_name.strip() if self.player_name.strip() != "" else "Player" + str(random.randint(100,999))
 
         print(f"Finding a match as {player_name_to_send}...")
@@ -109,7 +105,6 @@ class PygameGUI:
             self.ui_state = 'FAILED'
 
     def fetch_game_state(self):
-        """Gets the latest game state from the server for our specific game instance."""
         if self.player_id is None or self.game_id is None: return
         try:
             response = requests.get(f"{SERVER_URL}/state?player_id={self.player_id}&game_id={self.game_id}")
@@ -133,7 +128,6 @@ class PygameGUI:
             self.game_state['message'] = "Error connecting to server..."
 
     def post_action(self, payload):
-        """Sends a player action to the correct game instance on the server."""
         if self.player_id is None or self.game_id is None: return
         try:
             headers = {'Content-Type': 'application/json'}
@@ -148,7 +142,6 @@ class PygameGUI:
             self.game_state['message'] = "Error sending action to server..."
 
     def send_quit_signal(self):
-        """Informs the server that this client is quitting its specific game instance."""
         if self.player_id is None or self.game_id is None: return
         try:
             payload = {'player_id': self.player_id, 'game_id': self.game_id}
@@ -167,7 +160,6 @@ class PygameGUI:
                     self.send_quit_signal()
                     running = False
                 
-                # --- Event handling for name input box ---
                 if self.ui_state == 'MENU':
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         self.input_active = self.input_box.collidepoint(event.pos)
@@ -194,7 +186,6 @@ class PygameGUI:
         sys.exit()
 
     def handle_click(self, mouse_pos):
-        # Always check for button clicks first
         for key, rect in self.buttons.items():
             if rect.collidepoint(mouse_pos):
                 key_type, value = key
@@ -226,8 +217,7 @@ class PygameGUI:
                     
                     self.post_action(payload)
                     return
-
-        # Check for target selection clicks (only in PLAYING state)
+        
         if self.ui_state == 'PLAYING':
             gs = self.game_state
             if gs.get('game_state') == 'SELECTING_TARGET' and gs.get('your_id') == gs.get('current_player_idx'):
@@ -267,12 +257,11 @@ class PygameGUI:
         pygame.display.flip()
         
     def draw_menu_screen(self):
-        # Draw Title
         title_surf = self.title_font.render("COUP", True, WHITE)
         title_rect = title_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 150))
         self.screen.blit(title_surf, title_rect)
 
-        # Draw Name Input Box
+        
         label_surf = self.big_font.render("Enter Your Name:", True, WHITE)
         label_rect = label_surf.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 70))
         self.screen.blit(label_surf, label_rect)
@@ -281,9 +270,8 @@ class PygameGUI:
         pygame.draw.rect(self.screen, color, self.input_box, 2, border_radius=5)
         txt_surface = self.big_font.render(self.player_name, True, WHITE)
         self.screen.blit(txt_surface, (self.input_box.x+10, self.input_box.y+5))
-        self.input_box.w = max(300, txt_surface.get_width()+20) # Resize box dynamically
-
-        # Draw Match Button
+        self.input_box.w = max(300, txt_surface.get_width()+20) 
+        
         button_rect = pygame.Rect(SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 + 70, 300, 80)
         button_color = GREEN if self.player_name.strip() != "" else GRAY
         self.draw_button("Find Match", button_rect, ('action', 'Match'), button_color)
@@ -292,7 +280,7 @@ class PygameGUI:
         player_list = self.game_state.get('players', [])
         if len(player_list) < 4:
             msg = self.game_state.get('message', "Waiting for players...")
-            msg_surf = self.title_font.render(msg, True, WHITE)  # Gunakan font besar
+            msg_surf = self.title_font.render(msg, True, WHITE)  
             msg_rect = msg_surf.get_rect(center=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
             self.screen.blit(msg_surf, msg_rect)
         else:
@@ -314,12 +302,8 @@ class PygameGUI:
         text_rect = text_surf.get_rect(center=rect.center)
         self.screen.blit(text_surf, text_rect)
         self.buttons[key] = rect
-
-    # <<< NEW HELPER FUNCTION ADDED HERE >>>
+    
     def draw_rounded_card(self, surface, image, rect, radius):
-        """
-        Draws an image with rounded corners onto a surface.
-        """
         image_rect = image.get_rect()
         clip_surface = pygame.Surface(image_rect.size, pygame.SRCALPHA)
         pygame.draw.rect(clip_surface, WHITE, image_rect, border_radius=radius)
@@ -385,7 +369,7 @@ class PygameGUI:
                 if is_me and j < len(my_cards):
                     card_name = my_cards[j].lower()
                     if card_name in self.card_images:
-                        # <<< CHANGED LINE >>>
+                        
                         card_img_scaled = pygame.transform.scale(self.card_images[card_name], (card_w, card_h))
                         self.draw_rounded_card(self.screen, card_img_scaled, card_rect, 15)
                     else:
@@ -399,7 +383,7 @@ class PygameGUI:
                         card_img = pygame.transform.rotate(card_img, -90)
                     elif index == 2:
                         card_img = pygame.transform.rotate(card_img, 90)
-                    # <<< CHANGED LINE >>>
+                    
                     self.draw_rounded_card(self.screen, card_img, card_rect, 15)
 
             if index == 0:
@@ -449,7 +433,6 @@ class PygameGUI:
         ui_context = gs.get('ui_context', {})
         is_my_turn = gs.get('your_id') == gs.get('current_player_idx')
         
-        # --- Action Buttons ---
         if is_my_turn and gs.get('game_state') in ['AWAITING_ACTION', 'MUST_COUP']:
             actions = ['Income', 'ForeignAid', 'Tax', 'Steal', 'Assassinate', 'Exchange', 'Coup']
             if gs.get('game_state') == 'MUST_COUP': actions = ['Coup']
@@ -458,8 +441,6 @@ class PygameGUI:
                 rect = pygame.Rect(SCREEN_WIDTH/2 - 120, SCREEN_HEIGHT/2 - 130 + i * 35, 240, 30)
                 self.draw_button(name, rect, ('action', name), GREEN)
 
-        # --- Response Buttons (FIXED) ---
-        # The server will only send this context to players who should respond.
         if ui_context.get('type') == 'broadcast_response':
             can_challenge = ui_context.get('can_challenge', False)
             can_block = ui_context.get('can_block', False)
@@ -478,13 +459,10 @@ class PygameGUI:
                 rect = pygame.Rect(start_x + i * 210, SCREEN_HEIGHT/2, 200, 50)
                 self.draw_button(btn_data['text'], rect, btn_data['key'], btn_data['color'])
 
-        # --- Block Challenge Buttons ---
         if ui_context.get('type') == 'challenge_block' and is_my_turn:
              self.draw_button("Pass", pygame.Rect(SCREEN_WIDTH/2 - 270, SCREEN_HEIGHT/2, 260, 50), ('response', 'Pass'), GRAY)
              self.draw_button("Challenge Block", pygame.Rect(SCREEN_WIDTH/2 + 10, SCREEN_HEIGHT/2, 260, 50), ('response', 'Challenge'), YELLOW)
 
-        # --- Lose Influence Buttons (FIXED) ---
-        # Check the ID from the ui_context, not the root game state.
         if ui_context.get('type') == 'lose_influence' and ui_context.get('player_losing_influence_id') == gs.get('your_id'):
             cards = ui_context.get('cards', [])
             num_cards = len(cards)
@@ -492,7 +470,6 @@ class PygameGUI:
                 rect = pygame.Rect(SCREEN_WIDTH/2 - (num_cards * 220)/2 + 10 + i * 220, SCREEN_HEIGHT/2, 200, 60)
                 self.draw_button(f"Lose {card}", rect, ('card', card), YELLOW)
         
-        # --- Ambassador Exchange Buttons ---
         if ui_context.get('type') == 'ambassador_exchange' and is_my_turn:
             cards = ui_context.get('cards', [])
             num_to_keep = ui_context.get('num_to_keep', 0)
