@@ -69,7 +69,6 @@ class PygameGUI:
         self.player_areas = {}
         self.exchange_selection = []
         
-        
         self.input_box = pygame.Rect(SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 - 20, 300, 50)
         self.input_active = True
 

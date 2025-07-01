@@ -466,8 +466,6 @@ class HttpServer:
             if (method=='POST'):
                 object_address = j[1].strip()
                 return self.http_post(object_address, body)
-            if (method=='OPTIONS'):
-                return self.response(200, 'OK', '', {'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type'})
             else:
                 return self.response(400,'Bad Request','',{})
         except IndexError:
@@ -483,9 +481,9 @@ class HttpServer:
                 game = self.server_manager.get_game(game_id)
                 if game:
                     response_data = game.get_state_for_player(player_id)
-                    return self.response(200, 'OK', json.dumps(response_data), {'Content-Type': 'application/json'})
+                    return self.response(200, 'OK', json.dumps(response_data), {'Content-Type': self.types['.json']})
                 else:
-                    return self.response(404, 'Not Found', json.dumps({"error": "Game not found"}), {'Content-Type': 'application/json'})
+                    return self.response(404, 'Not Found', json.dumps({"error": "Game not found"}), {'Content-Type': self.types['.json']})
             except Exception as e:
                 return self.response(500, 'Internal Server Error', str(e), {})
         
@@ -497,16 +495,16 @@ class HttpServer:
         try:
             post_data = json.loads(body)
         except json.JSONDecodeError:
-            return self.response(400, 'Bad Request', json.dumps({"error": "Invalid JSON"}), {'Content-Type': 'application/json'})
+            return self.response(400, 'Bad Request', json.dumps({"error": "Invalid JSON"}), {'Content-Type': self.types['.json']})
 
         if object_address == '/matchmake':
             player_name = post_data.get('name', 'Anon')
             game_id, player_id = self.server_manager.find_or_create_game(player_name)
             if player_id is not None:
                 response_data = {'player_id': player_id, 'game_id': game_id}
-                return self.response(200, 'OK', json.dumps(response_data), {'Content-Type': 'application/json'})
+                return self.response(200, 'OK', json.dumps(response_data), {'Content-Type': self.types['.json']})
             else:
-                return self.response(500, 'Internal Server Error', json.dumps({'error': 'Failed to join game'}), {'Content-Type': 'application/json'})
+                return self.response(500, 'Internal Server Error', json.dumps({'error': 'Failed to join game'}), {'Content-Type': self.types['.json']})
 
         if object_address in ['/action', '/quit']:
             game_id = post_data.get('game_id')
@@ -516,8 +514,8 @@ class HttpServer:
                     game.handle_action(post_data)
                 elif object_address == '/quit':
                     game.eliminate_player(post_data.get('player_id'))
-                return self.response(200, 'OK', json.dumps({"status": "ok"}), {'Content-Type': 'application/json'})
+                return self.response(200, 'OK', json.dumps({"status": "ok"}), {'Content-Type': self.types['.json']})
             else:
-                return self.response(404, 'Not Found', json.dumps({"error": "Game not found"}), {'Content-Type': 'application/json'})
+                return self.response(404, 'Not Found', json.dumps({"error": "Game not found"}), {'Content-Type': self.types['.json']})
         
         return self.response(404,'Not Found','',{})
