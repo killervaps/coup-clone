@@ -16,6 +16,8 @@ class BackendList:
 		self.current = 0
 
 	def getserver(self, client_ip):
+		logging.warning(f"new client connected from {client_ip}")
+		
 		if client_ip in self.client_map: # Jika suatu ip client pernah connect ke server sebelumnya
 			s = self.client_map.get(client_ip)
 		
